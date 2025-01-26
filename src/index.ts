@@ -21,33 +21,30 @@ const testFiles =
     `./assets/test-images/test-image-10.png`,
   ]
 
-const generateTestServers = (n: number): Array<types.VirtualNode> =>
-  Array.from(Array(n).keys()).map(i => i + 1).map(i =>({
-    id: "ttestServerId" + i,
-    name: "ttestServerName" + i,
-  }))
-const testServers = generateTestServers(3)
-const calcIndex = func.calculateNodeIndex(testServers)
-if (E.isRight(calcIndex))
+const main = async () =>
 {
-  calcIndex.right.printSortedKeysCircular()
-}
+  const generateTestServers = (n: number): Array<types.VirtualNode> =>
+    Array.from(Array(n).keys()).map(i => i + 1).map(i =>({
+      id: "ttestServerId" + i,
+      name: "ttestServerName" + i,
+    }))
+  const testServers = generateTestServers(3)
+  const calcIndex = func.calculateNodeIndex(testServers)
+  if (E.isRight(calcIndex))
+    calcIndex.right.printSortedKeysCircular()
 
-const main =
-  async () => {
-    for (const testFilePath of testFiles) {
-      await pipe(
-        calcIndex,
+  for (const testFilePath of testFiles)
+    await pipe(
+      calcIndex,
+      TE.fromEither,
+      TE.chain(nodeIndex => pipe(
+        func.getFileFromFilePath(testFilePath),
         TE.fromEither,
-        TE.chain(nodeIndex => pipe(
-          func.getFileFromFilePath(testFilePath),
-          TE.fromEither,
-          TE.chain(func.calculateFileToIndex(nodeIndex)),
-          TE.map(_ => `${(testFilePath)} ==> ${_.value.id}`)
-        )),
-        TE.map(console.log)
-      )()
-    }
-  }
+        TE.chain(func.calculateFileToIndex(nodeIndex)),
+        TE.map(_ => `${(testFilePath)} ==> ${_.value.id}`)
+      )),
+      TE.map(console.log)
+    )()
+}
 
 main()
